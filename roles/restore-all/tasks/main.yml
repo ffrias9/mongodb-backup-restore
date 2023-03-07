@@ -1,0 +1,30 @@
+---
+- name: Find latest backups
+  local_action:
+    module: find
+    paths: "{{ local_bkup_path  }}"
+    file_type: directory
+  register: dirs
+
+- name: Sort dirs
+  set_fact:
+    sorted_dirs: "{{ dirs.files | sort(attribute='ctime') }}"
+
+- name: Copy backup files to server
+  copy:
+    src: "{{ dirs.files[-1].path }}/"
+    dest: "{{ remote_bkup_path }}"
+
+- name: Dump the database
+  command: >
+    mongorestore
+    --uri="mongodb://{{ server_ip }}:{{ port }}"
+    -u "{{ user }}"
+    --authenticationDatabase "{{ auth_database }}"
+    -p "{{ password }}"
+    "{{ remote_bkup_path }}/"
+
+- name: Remove backups from the server
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: absent

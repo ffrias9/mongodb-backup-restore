@@ -1,0 +1,57 @@
+---
+- name: Create remote backup directory
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: directory
+    mode: 0777
+
+- name: Register backup date
+  local_action:
+    module: command
+    cmd: date +%d-%m-%Y_%H:%M:%S
+  register: bkup_date
+
+- name: Dump databases
+  command: >
+    mongodump
+    --uri="mongodb://{{ server_ip }}:{{ port }}"
+    -u "{{ user }}"
+    --authenticationDatabase "{{ auth_database }}"
+    -p "{{ password }}"
+    --out "{{ remote_bkup_path }}"
+
+- name: Create local path for backups
+  local_action:
+    module: file
+    path: "{{ local_bkup_path }}"
+    mode: 0777
+    state: directory
+
+- name: Transfer backup files to localhost
+  become: false
+  synchronize:
+    mode: pull
+    src: "{{ remote_bkup_path }}/"
+    dest: "{{ local_bkup_path }}/{{ bkup_date.stdout }}/"
+  delegate_to: localhost
+
+- name: Remove backups from the server
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: absent
+
+- name: Find local old backups
+  local_action:
+    module: find
+    paths: "{{ local_bkup_path }}"
+    age: "{{ files_age }}"
+    recurse: no
+    file_type: directory
+  register: collected_directories
+
+- name: Remove local old backups
+  local_action:
+    module: file
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ collected_directories.files }}"

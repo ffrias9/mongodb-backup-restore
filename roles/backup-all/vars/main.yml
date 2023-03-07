@@ -1,0 +1,25 @@
+# Information to connect with the database
+user: admin
+password: 12345
+auth_database: admin
+server_ip: 192.168.10.80
+port: 27017
+
+# Database we want to backup
+database: prueba
+
+# Age that the files must have to be deleted
+# You can choose seconds, minutes, hours, days, or weeks by specifying the first letter of any of those words (e.g., “1w”)
+files_age: 2w
+
+# Paths for the backups files
+remote_bkup_path: /backups
+local_bkup_path: /home/vagrant/dumps
+
+
+
+
+
+
+# Don´t touch this var
+action: n
