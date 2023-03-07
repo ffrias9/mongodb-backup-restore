@@ -1,0 +1,64 @@
+---
+- name: Create remote backup directory
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: directory
+
+- name: Register backup date
+  local_action:
+    module: command
+    cmd: date +%d-%m-%Y_%H:%M:%S
+  register: bkup_date
+
+- name: Dump the database
+  command: >
+    mongodump
+    --uri="mongodb://{{ server_ip }}:{{ port }}"
+    -u "{{ user }}"
+    --authenticationDatabase "{{ auth_database }}"
+    -p "{{ password }}"
+    --out "{{ remote_bkup_path }}/"
+    --db "{{ database }}"
+
+- stat:
+    path: "{{ remote_bkup_path }}/{{ database }}"
+  register: bk_dir
+
+- debug:
+    msg: "Database {{ database }} not exists."
+  when: not bk_dir.stat.exists or not bk_dir.stat.isdir
+  failed_when: true
+
+- name: Find files in backup path
+  find:
+    path: "{{ remote_bkup_path }}/{{ database }}/"
+    recurse: no
+  register: files_to_transfer
+
+- name: Feth backup files
+  fetch:
+    src: "{{ item.path }}"
+    dest: "{{ local_bkup_path }}/{{ database }}-{{ bkup_date.stdout }}/{{ database }}/"
+    flat: yes
+  with_items: "{{ files_to_transfer.files }}"
+
+- name: Remove backups from the server
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: absent
+
+- name: Find local old backups
+  local_action:
+    module: find
+    paths: "{{ local_bkup_path }}/"
+    age: 2w
+    recurse: no
+    file_type: directory
+  register: collected_directories
+
+- name: Remove local old backups
+  local_action:
+    module: file
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ collected_directories.files }}"

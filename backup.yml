@@ -1,0 +1,6 @@
+---
+- hosts: host
+  become: True
+
+  roles:
+    - role: backup

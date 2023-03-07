@@ -1,0 +1,24 @@
+---
+- name: The mongo_dumps target folder is present
+  file:
+    path: /root/backups
+    state: directory
+
+- name: Find latest backups
+  find:
+    paths: "/root/ibackups/{{ database }}*"
+    file_type: directory
+  register: dirs
+
+- name: Sort dirs
+  set_fact:
+    sorted_dirs: "{{ dirs.files | sort(attribute='ctime') }}"
+
+- name: Dump the database
+  command: >
+    mongorestore
+    --uri="mongodb://172.17.0.2:27017"
+    -u admin
+    --authenticationDatabase admin
+    -p 123456
+    "{{ sorted_dirs[-1].path }}"

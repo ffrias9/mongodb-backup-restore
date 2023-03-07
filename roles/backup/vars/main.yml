@@ -1,0 +1,9 @@
+user: admin
+password: 12345
+database: prueba
+auth_database: admin
+server_ip: 192.168.10.80
+port: 27017
+
+remote_bkup_path: /tmp/backups
+local_bkup_path: /home/vagrant/backups
