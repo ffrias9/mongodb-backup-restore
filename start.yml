@@ -1,0 +1,16 @@
+---
+- hosts: host
+  become: True
+
+  pre_tasks:
+    - debug:
+        msg: "ERROR - You must specify whether you want to perform a backup or restore. Please add -e action=b for backup or -e action=r for restore."
+      when: action not in "b, r"
+      failed_when: true
+
+  roles:
+    - role: backup
+      when: action == "b"
+
+    - role: restore
+      when: action == "r"

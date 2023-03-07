@@ -51,7 +51,7 @@
   local_action:
     module: find
     paths: "{{ local_bkup_path }}/"
-    age: 2w
+    age: "{{ files_age }}"
     recurse: no
     file_type: directory
   register: collected_directories

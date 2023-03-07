@@ -1,12 +1,8 @@
 ---
-- name: The mongo_dumps target folder is present
-  file:
-    path: /root/backups
-    state: directory
-
 - name: Find latest backups
-  find:
-    paths: "/root/ibackups/{{ database }}*"
+  local_action:
+    module: find
+    paths: "{{ local_bkup_path  }}"
     file_type: directory
   register: dirs
 
@@ -14,11 +10,28 @@
   set_fact:
     sorted_dirs: "{{ dirs.files | sort(attribute='ctime') }}"
 
+- name: Find local backup files
+  local_action:
+    module: find
+    path: "{{ dirs.files[-1].path }}/{{ database }}"
+  register: test
+
+- name: Copy backup files to server
+  copy:
+    src: "{{ item.path }}"
+    dest: "{{ remote_bkup_path }}/{{ database }}/"
+  with_items: "{{ test.files }}"
+
 - name: Dump the database
   command: >
     mongorestore
-    --uri="mongodb://172.17.0.2:27017"
-    -u admin
-    --authenticationDatabase admin
-    -p 123456
-    "{{ sorted_dirs[-1].path }}"
+    --uri="mongodb://{{ server_ip }}:{{ port }}"
+    -u "{{ user }}"
+    --authenticationDatabase "{{ auth_database }}"
+    -p "{{ password }}"
+    "{{ remote_bkup_path }}"
+
+- name: Remove backups from the server
+  file:
+    path: "{{ remote_bkup_path }}"
+    state: absent
