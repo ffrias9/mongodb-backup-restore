@@ -1,21 +1,21 @@
 ---
-- name: Find latest backups
+- name: Find backups
   local_action:
     module: find
     paths: "{{ local_bkup_path  }}"
     file_type: directory
   register: dirs
 
-- name: Sort dirs
+- name: Sort backups by age
   set_fact:
     sorted_dirs: "{{ dirs.files | sort(attribute='ctime') }}"
 
-- name: Copy backup files to server
+- name: Copy latest backup files to server
   copy:
     src: "{{ dirs.files[-1].path }}/"
     dest: "{{ remote_bkup_path }}"
 
-- name: Dump the database
+- name: Restore the database
   command: >
     mongorestore
     --uri="mongodb://{{ server_ip }}:{{ port }}"

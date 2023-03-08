@@ -1,6 +1,11 @@
 ---
 - hosts: host
   become: True
+  vars:
+    action: x
+    all: x
+    # Database we want to backup or restore
+    database: x
 
   pre_tasks:
     - debug:
@@ -8,9 +13,25 @@
       when: action not in "b, r"
       failed_when: true
 
+    - debug:
+        msg: "ERROR - You must specify if you want to backup or restore all databases or not. Please add -e all=y or all=n."
+      when: all not in "y, n"
+      failed_when: true
+
+    - debug:
+        msg: "ERROR - You must specify the database that you want to backup or restore. Please add -e database=DatabaseName."
+      when: database == "x"
+      failed_when: true
+
   roles:
     - role: backup
-      when: action == "b"
+      when: action == "b" and all == "n" and database != "x"
 
     - role: restore
-      when: action == "r"
+      when: action == "r" and all == "n" and database != "x"
+
+    - role: backup-all
+      when: action == "b" and all == "y"
+
+    - role: restore-all
+      when: action == "r" and all == "y"

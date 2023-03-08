@@ -20,10 +20,12 @@
     --out "{{ remote_bkup_path }}/"
     --db "{{ database }}"
 
+# Comprobamos si el backup se ha creado correctamente
 - stat:
     path: "{{ remote_bkup_path }}/{{ database }}"
   register: bk_dir
 
+# Si el backup no se ha creado correctamente se avisa de que la base de datos no existe
 - debug:
     msg: "Database {{ database }} not exists."
   when: not bk_dir.stat.exists or not bk_dir.stat.isdir
@@ -35,7 +37,7 @@
     recurse: no
   register: files_to_transfer
 
-- name: Feth backup files
+- name: Fetch backup files
   fetch:
     src: "{{ item.path }}"
     dest: "{{ local_bkup_path }}/{{ database }}-{{ bkup_date.stdout }}/{{ database }}/"

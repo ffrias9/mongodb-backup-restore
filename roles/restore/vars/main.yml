@@ -5,17 +5,6 @@ auth_database: admin
 server_ip: 192.168.10.80
 port: 27017
 
-# Database we want to restore
-database: prueba
-
 # Paths for the backups files
 remote_bkup_path: /tmp/backups/
 local_bkup_path: /home/vagrant/backups
-
-
-
-
-
-
-# Don´t touch this var
-action: n

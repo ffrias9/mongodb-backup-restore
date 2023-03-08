@@ -27,7 +27,7 @@
     mode: 0777
     state: directory
 
-- name: Transfer backup files to localhost
+- name: Transfer backup files from server to localhost
   become: false
   synchronize:
     mode: pull
